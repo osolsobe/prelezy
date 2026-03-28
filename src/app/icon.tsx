@@ -21,13 +21,13 @@ export default function Icon() {
           {/* hlava */}
           <circle cx="11" cy="4" r="3" fill="white" />
           {/* telo */}
-          <line x1="11" y1="7" x2="11" y2="17" stroke="white" stroke-width="2.2" stroke-linecap="round" />
+          <line x1="11" y1="7" x2="11" y2="17" stroke="white" strokeWidth="2.2" strokeLinecap="round" />
           {/* ruce - leva ruka hore (lezi na stene), prava dole */}
-          <line x1="11" y1="10" x2="4" y2="7" stroke="white" stroke-width="2.2" stroke-linecap="round" />
-          <line x1="11" y1="12" x2="17" y2="14" stroke="white" stroke-width="2.2" stroke-linecap="round" />
+          <line x1="11" y1="10" x2="4" y2="7" stroke="white" strokeWidth="2.2" strokeLinecap="round" />
+          <line x1="11" y1="12" x2="17" y2="14" stroke="white" strokeWidth="2.2" strokeLinecap="round" />
           {/* nohy */}
-          <line x1="11" y1="17" x2="6" y2="26" stroke="white" stroke-width="2.2" stroke-linecap="round" />
-          <line x1="11" y1="17" x2="16" y2="24" stroke="white" stroke-width="2.2" stroke-linecap="round" />
+          <line x1="11" y1="17" x2="6" y2="26" stroke="white" strokeWidth="2.2" strokeLinecap="round" />
+          <line x1="11" y1="17" x2="16" y2="24" stroke="white" strokeWidth="2.2" strokeLinecap="round" />
         </svg>
       </div>
     ),
