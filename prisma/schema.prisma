@@ -1,0 +1,132 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  displayName  String
+  role         Role     @default(USER)
+  lang         String   @default("cs")
+  createdAt    DateTime @default(now())
+
+  attempts    Attempt[]
+  comments    Comment[]
+  resetTokens PasswordResetToken[]
+}
+
+// Multi-tenant príprava — v Phase 1 sa používa jedna Wall
+model Wall {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+
+  slots  Slot[]
+  routes Route[]
+}
+
+// Fyzické miesto na stene — QR kód odkazuje na slot, nie na cestu
+model Slot {
+  id     String  @id @default(cuid())
+  wallId String
+  code   String  @unique // napr. A1, B3
+  label  String          // popis pre tlač
+  qrUrl  String?         // URL QR obrázka (generuje sa pri vytvorení)
+
+  wall        Wall             @relation(fields: [wallId], references: [id])
+  assignments SlotAssignment[]
+}
+
+// História priradení ciest k slotom
+model SlotAssignment {
+  id         String    @id @default(cuid())
+  slotId     String
+  routeId    String
+  assignedAt DateTime  @default(now())
+  removedAt  DateTime? // null = aktívne priradenie
+
+  slot  Slot  @relation(fields: [slotId], references: [id])
+  route Route @relation(fields: [routeId], references: [id])
+
+  @@index([slotId, removedAt])
+}
+
+// Cesta existuje nezávisle od slotu
+model Route {
+  id          String    @id @default(cuid())
+  wallId      String
+  name        String
+  sector      String?
+  color       String    // farba chytov napr. "červená", "modrá"
+  grade       String    // francúzska stupnica: "6a", "7b+", ...
+  setDate     DateTime
+  stripDate   DateTime?
+  archived    Boolean   @default(false)
+  photoUrl    String?
+  description String?
+  createdAt   DateTime  @default(now())
+
+  wall        Wall             @relation(fields: [wallId], references: [id])
+  assignments SlotAssignment[]
+  attempts    Attempt[]
+  comments    Comment[]
+
+  @@index([wallId, archived])
+  @@index([grade])
+}
+
+// Záznam pokusu — vždy viazaný na routeId (nie slotId)
+model Attempt {
+  id       String   @id @default(cuid())
+  userId   String
+  routeId  String
+  date     DateTime @default(now())
+  success  Boolean
+  flash    Boolean  @default(false)
+  tryCount Int      @default(1)
+  note     String?
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  route Route @relation(fields: [routeId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([routeId])
+}
+
+// Komentáre — viditeľné všetkým
+model Comment {
+  id        String   @id @default(cuid())
+  userId    String
+  routeId   String
+  text      String   @db.VarChar(500)
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  route Route @relation(fields: [routeId], references: [id], onDelete: Cascade)
+
+  @@index([routeId])
+}
+
+// Reset hesla
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  token     String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
