@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
 
 export async function GET(
   _request: NextRequest,
@@ -42,4 +43,23 @@ export async function GET(
   }
 
   return NextResponse.json({ slot: { ...slot, assignments: undefined }, route: routeWithStats });
+}
+
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ code: string }> }
+) {
+  const session = await auth();
+  if (!session || (session.user as { role?: string }).role !== "ADMIN") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { code } = await params;
+  const slot = await prisma.slot.findUnique({ where: { code } });
+  if (!slot) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  await prisma.slotAssignment.deleteMany({ where: { slotId: slot.id } });
+  await prisma.slot.delete({ where: { code } });
+
+  return NextResponse.json({ ok: true });
 }

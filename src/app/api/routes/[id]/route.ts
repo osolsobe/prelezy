@@ -71,7 +71,7 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
@@ -80,7 +80,15 @@ export async function DELETE(
   }
 
   const { id } = await params;
-  await prisma.route.update({ where: { id }, data: { archived: true } });
+  const { searchParams } = new URL(request.url);
+  const hard = searchParams.get("hard") === "1";
+
+  if (hard) {
+    await prisma.slotAssignment.deleteMany({ where: { routeId: id } });
+    await prisma.route.delete({ where: { id } });
+  } else {
+    await prisma.route.update({ where: { id }, data: { archived: true } });
+  }
 
   return NextResponse.json({ ok: true });
 }

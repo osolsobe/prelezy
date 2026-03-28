@@ -1,20 +1,24 @@
-import { prisma } from "@/lib/prisma";
+"use client";
 
-export default async function QrPrintPage({
-  params,
-}: {
-  params: Promise<{ locale: string }>;
-}) {
-  const { locale } = await params;
+import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
+
+interface Slot {
+  id: string;
+  code: string;
+}
+
+export default function QrPrintPage() {
+  const params = useParams();
+  const locale = params.locale as string;
   const cs = locale === "cs";
+  const [slots, setSlots] = useState<Slot[]>([]);
 
-  const wall = await prisma.wall.findFirst();
-  const slots = await prisma.slot.findMany({
-    where: wall ? { wallId: wall.id } : {},
-    orderBy: { code: "asc" },
-  });
-
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  useEffect(() => {
+    fetch("/api/slots")
+      .then((r) => r.json())
+      .then(setSlots);
+  }, []);
 
   return (
     <div>
@@ -36,7 +40,6 @@ export default async function QrPrintPage({
           : "Each QR code links to the slot URL. Print and laminate on the wall."}
       </p>
 
-      {/* Mriežka QR kódov — optimalizovaná pre tlač */}
       <div className="grid grid-cols-4 sm:grid-cols-5 gap-4 print:grid-cols-5 print:gap-2">
         {slots.map((slot) => (
           <div
@@ -45,16 +48,13 @@ export default async function QrPrintPage({
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={`/api/qr/${slot.code}`}
+              src={`/api/qr/${slot.code}?v=2`}
               alt={`QR ${slot.code}`}
               width={120}
               height={120}
               className="mx-auto"
             />
             <div className="font-bold text-lg mt-1">{slot.code}</div>
-            <div className="text-xs text-gray-400 break-all">
-              {baseUrl}/slot/{slot.code}
-            </div>
           </div>
         ))}
       </div>

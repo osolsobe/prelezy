@@ -3,25 +3,19 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --bg: #f4f1ed;
+  --accent: #ea580c;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--bg);
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+  .font-condensed {
+    font-family: var(--font-condensed), sans-serif;
   }
 }

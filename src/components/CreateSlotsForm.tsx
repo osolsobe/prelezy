@@ -6,9 +6,11 @@ import { useRouter } from "next/navigation";
 export default function CreateSlotsForm({
   wallId,
   locale,
+  onCreated,
 }: {
   wallId: string;
   locale: string;
+  onCreated?: () => void;
 }) {
   const router = useRouter();
   const cs = locale === "cs";
@@ -37,7 +39,7 @@ export default function CreateSlotsForm({
           ? `Vytvořeno ${data.length} slotů`
           : `Created ${data.length} slots`
       );
-      router.refresh();
+      onCreated ? onCreated() : router.refresh();
     }
   }
 

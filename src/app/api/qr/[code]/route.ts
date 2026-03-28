@@ -6,21 +6,22 @@ export async function GET(
   { params }: { params: Promise<{ code: string }> }
 ) {
   const { code } = await params;
-  const baseUrl =
-    process.env.NEXT_PUBLIC_APP_URL ?? `https://${request.headers.get("host")}`;
-  const url = `${baseUrl}/slot/${code}`;
+  const host = request.headers.get("host") ?? "prelezy.vercel.app";
+  const proto = host.startsWith("localhost") ? "http" : "https";
+  const url = `${proto}://${host}/cs/slot/${code}`;
 
   const pngBuffer = await QRCode.toBuffer(url, {
     type: "png",
-    width: 300,
-    margin: 2,
-    color: { dark: "#1f2937", light: "#ffffff" },
+    width: 600,
+    margin: 3,
+    errorCorrectionLevel: "H",
+    color: { dark: "#000000", light: "#ffffff" },
   });
 
   return new NextResponse(new Uint8Array(pngBuffer), {
     headers: {
       "Content-Type": "image/png",
-      "Cache-Control": "public, max-age=31536000, immutable",
+      "Cache-Control": "no-store",
     },
   });
 }

@@ -1,20 +1,31 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import RouteForm from "@/components/RouteForm";
+import ArchiveButton from "@/components/ArchiveButton";
 
 export default async function EditRoutePage({
   params,
 }: {
   params: Promise<{ locale: string; id: string }>;
 }) {
-  const { locale, id } = await params;
+  const { locale, id: rawId } = await params;
+  // decodeURIComponent handles both %2B and literal + in URL
+  const id = decodeURIComponent(rawId);
   const cs = locale === "cs";
 
-  const route = await prisma.route.findUnique({ where: { id } });
-  if (!route) notFound();
+  let route;
+  let wall;
+  try {
+    [route, wall] = await Promise.all([
+      prisma.route.findUnique({ where: { id } }),
+      prisma.wall.findFirst(),
+    ]);
+  } catch (e) {
+    console.error("Edit page DB error:", e);
+    throw e;
+  }
 
-  const wall = await prisma.wall.findFirst();
-  if (!wall) notFound();
+  if (!route || !wall) notFound();
 
   return (
     <div className="max-w-lg mx-auto">
@@ -38,43 +49,9 @@ export default async function EditRoutePage({
         />
       </div>
 
-      {/* Archivovanie */}
       {!route.archived && (
-        <ArchiveButton routeId={id} locale={locale} />
+        <ArchiveButton routeId={route.id} locale={locale} />
       )}
-    </div>
-  );
-}
-
-function ArchiveButton({ routeId, locale }: { routeId: string; locale: string }) {
-  const cs = locale === "cs";
-  return (
-    <div className="mt-4 bg-white rounded-xl border border-gray-200 p-4">
-      <h3 className="text-sm font-medium text-gray-700 mb-2">
-        {cs ? "Archivace" : "Archive"}
-      </h3>
-      <p className="text-xs text-gray-500 mb-3">
-        {cs
-          ? "Archivovaná cesta se nebude zobrazovat v aktivním seznamu, ale statistiky zůstanou zachovány."
-          : "Archived routes won't appear in the active list, but statistics are preserved."}
-      </p>
-      <form
-        action={`/api/routes/${routeId}`}
-        method="DELETE"
-        onSubmit={async (e) => {
-          e.preventDefault();
-          if (!confirm(cs ? "Archivovat tuto cestu?" : "Archive this route?")) return;
-          await fetch(`/api/routes/${routeId}`, { method: "DELETE" });
-          window.location.href = `/${locale}/admin/routes`;
-        }}
-      >
-        <button
-          type="submit"
-          className="text-sm text-red-500 border border-red-300 px-4 py-2 rounded-lg hover:bg-red-50"
-        >
-          {cs ? "Archivovat cestu" : "Archive route"}
-        </button>
-      </form>
     </div>
   );
 }
